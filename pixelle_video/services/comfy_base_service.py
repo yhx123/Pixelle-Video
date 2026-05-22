@@ -216,8 +216,32 @@ class ComfyBaseService:
         if workflow is None:
             workflow = self._get_default_workflow()
         
+        # 1.5 Fail-safe: If runninghub workflow requested but no API key configured, auto-switch to selfhost
+        runninghub_api_key = (
+            self.global_config.get("runninghub_api_key")
+            or os.getenv("RUNNINGHUB_API_KEY")
+        )
+        if workflow and workflow.startswith("runninghub/"):
+            if not runninghub_api_key or not str(runninghub_api_key).strip() or runninghub_api_key == "null" or str(runninghub_api_key).lower() == "none":
+                old_wf = workflow
+                workflow = workflow.replace("runninghub/", "selfhost/")
+                logger.warning(f"⚠️ 自动容错拦截: 未配置 RunningHub API 密钥，但请求了云端工作流 '{old_wf}'。已自动切换为本地自托管工作流: '{workflow}'")
+        
         # 2. Scan available workflows
         available_workflows = self._scan_workflows()
+        available_keys = [wf["key"] for wf in available_workflows]
+        
+        # 2.5 Fail-safe check: If the resolved workflow is not available, try to fallback to a valid default workflow
+        if workflow not in available_keys:
+            default_workflow = self.config.get("default_workflow")
+            if default_workflow and default_workflow in available_keys:
+                logger.warning(f"⚠️ 自动容错拦截: 工作流 '{workflow}' 在本地不存在。已平滑降级为该服务默认的可用工作流: '{default_workflow}'")
+                workflow = default_workflow
+            elif available_keys:
+                # Fallback to the first available workflow
+                fallback_wf = available_keys[0]
+                logger.warning(f"⚠️ 自动容错拦截: 工作流 '{workflow}' 在本地不存在且没有可用默认配置。已平滑降级为首个可用工作流: '{fallback_wf}'")
+                workflow = fallback_wf
         
         # 3. Find matching workflow by key
         for wf_info in available_workflows:
@@ -226,7 +250,6 @@ class ComfyBaseService:
                 return wf_info
         
         # 4. Not found - generate error message
-        available_keys = [wf["key"] for wf in available_workflows]
         available_str = ", ".join(available_keys) if available_keys else "none"
         raise ValueError(
             f"Workflow '{workflow}' not found. "
