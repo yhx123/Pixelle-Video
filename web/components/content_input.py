@@ -48,33 +48,131 @@ def render_content_input():
             )
             
             # Text input (unified for both modes)
-            text_placeholder = tr("input.topic_placeholder") if mode == "generate" else tr("input.content_placeholder")
-            text_height = 120 if mode == "generate" else 200
-            text_help = tr("input.text_help_generate") if mode == "generate" else tr("input.text_help_fixed")
-            
-            text = st.text_area(
-                tr("input.text"),
-                placeholder=text_placeholder,
-                height=text_height,
-                help=text_help
-            )
-            
-            # Split mode selector (only show in fixed mode)
-            if mode == "fixed":
-                split_mode_options = {
-                    "paragraph": tr("split.mode_paragraph"),
-                    "line": tr("split.mode_line"),
-                    "sentence": tr("split.mode_sentence"),
-                }
-                split_mode = st.selectbox(
-                    tr("split.mode_label"),
-                    options=list(split_mode_options.keys()),
-                    format_func=lambda x: split_mode_options[x],
-                    index=0,  # Default to paragraph mode
-                    help=tr("split.mode_help")
+            split_mode = "paragraph"
+            if mode == "generate":
+                text_placeholder = tr("input.topic_placeholder")
+                text_height = 120
+                text_help = tr("input.text_help_generate")
+                
+                text = st.text_area(
+                    tr("input.text"),
+                    placeholder=text_placeholder,
+                    height=text_height,
+                    help=text_help
                 )
             else:
-                split_mode = "paragraph"  # Default for generate mode (not used)
+                # Fixed mode: dynamic list-based multi-row input with smart layout
+                st.info(tr("input.fixed_format_hint"))
+                
+                # Initialize state with 8 premium "壹格专升本" video scenes
+                if "fixed_scenes_count" not in st.session_state:
+                    st.session_state.fixed_scenes_count = 8
+                    
+                    # 预设的专升本分镜旁白与自定义生图提示词
+                    default_scenes = [
+                        {
+                            "narration": "很多 2027 届的同学公共课复习得热火朝天，但一提到专业课，脑子里却是一片空白。专业课到底选哪科？该怎么备考？这关如果搞错了，后面的努力可能全部白费！",
+                            "prompt": "A frustrated male college student sitting at a desk with towering stacks of books, a glowing big neon question mark above his head, modern minimalist illustration style, deep navy and energetic orange colors, high contrast, clean lines, cinematic lighting --ar 9:16"
+                        },
+                        {
+                            "narration": "专升本专业课总分 150 分。江西专升本将专业课划分成了 9 大招考类别，你的专科专业决定了你能报的类别，而类别直接锁定了你下午要考的专业课科目。",
+                            "prompt": "An abstract 3D infographic showing a flowchart branch splitting into colorful glowing modules, representing academic disciplines, corporate pastel gradient colors, high-tech minimalism, hyper-detailed rendering --ar 9:16"
+                        },
+                        {
+                            "narration": "比如计算机专业属于理工类，专业课要考高等数学；会计或市场营销属于管理类，专业课考管理学。同一个大类底下的所有专业，考的都是同一张专业课试卷。",
+                            "prompt": "Split-screen concept, left side showing mathematical integration equations on a modern laptop screen, right side showing a colorful conceptual business organization chart, vibrant technology aesthetic, vector graphics style --ar 9:16"
+                        },
+                        {
+                            "narration": "公共课 300 分是你的“入场券”，不过省控线，专业课再高也白搭；但专业课 150 分，才是高分段选手拉开差距、决定你能不能上公办本科的“终极杀手锏”。",
+                            "prompt": "A glowing cosmic scale balance, a heavy foundational block on the left representing base entry ticket, and a shining golden laurel crown on the right representing extreme competitive advantage, surreal vector style --ar 9:16"
+                        },
+                        {
+                            "narration": "对于理工类考生，高等数学就是一座大山。微积分作为绝对核心占了大部分分值。基础薄弱的同学，从现在起就得从函数、极限老老实实补起，绝不能拖延！",
+                            "prompt": "A dynamic silhouette of a climber climbing up a steep stylized mountain built from mathematical formulas and calculus integral symbols, golden sunrise lighting, conceptual vector art, motivating style --ar 9:16"
+                        },
+                        {
+                            "narration": "而管理学虽然理论庞杂，但体系极其清晰。最好的复习武器就是思维导图。只要把每章的核心框架理顺，专业课拿分反而比高数更加稳当、更有性价比。",
+                            "prompt": "Close up of hands drawing a beautifully structured mind-map on an iPad screen, branches glowing with soft pastel light, organized concept, bright modern desk environment, flat lay view, warm aesthetic --ar 9:16"
+                        },
+                        {
+                            "narration": "2027 届现在要做三件事：第一，通过专业对照表确定你的招考类别；第二，翻出前一年的官方大纲建立预期；第三，诚实评估底子，把专业课提前列入规划！",
+                            "prompt": "A beautifully styled study planner notebook on a clean desk, three bright green checklists marked done, a cup of coffee nearby, soft volumetric window light, minimal cozy study aesthetic --ar 9:16"
+                        },
+                        {
+                            "narration": "硬实力来自于每天有规划的积累，而不是考前三个月的盲目突击。关注我，持续为你更新 2027 届专升本最靠谱的避坑攻略，留言告诉我你想考哪门！",
+                            "prompt": "A winding scenic road leading towards a bright horizon with ascending glowing arrows in the sky, minimalist modern design, warm comforting color scheme, welcoming and hopeful mood --ar 9:16"
+                        }
+                    ]
+                    
+                    for idx, scene in enumerate(default_scenes):
+                        st.session_state[f"fixed_narration_{idx}"] = scene["narration"]
+                        st.session_state[f"fixed_prompt_{idx}"] = scene["prompt"]
+                
+                # Render list
+                for i in range(st.session_state.fixed_scenes_count):
+                    # We want each row to be: [Narration (5), Image Prompt (5), Delete button (1)]
+                    col1, col2, col3 = st.columns([5, 5, 1])
+                    
+                    with col1:
+                        # Make first row label visible, others collapsed for neat grid
+                        label_vis = "visible" if i == 0 else "collapsed"
+                        st.text_input(
+                            label=tr("input.narration_label"),
+                            key=f"fixed_narration_{i}",
+                            placeholder=tr("input.narration_placeholder"),
+                            label_visibility=label_vis
+                        )
+                        
+                    with col2:
+                        st.text_input(
+                            label=tr("input.prompt_label"),
+                            key=f"fixed_prompt_{i}",
+                            placeholder=tr("input.prompt_placeholder"),
+                            label_visibility=label_vis
+                        )
+                        
+                    with col3:
+                        # Align delete button with inputs vertically
+                        if i == 0:
+                            # Align first row with label height
+                            st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+                            
+                        if st.button("🗑️", key=f"del_btn_{i}", help="删除此分镜", use_container_width=True):
+                            # Shift all subsequent scenes up
+                            for idx in range(i, st.session_state.fixed_scenes_count - 1):
+                                st.session_state[f"fixed_narration_{idx}"] = st.session_state.get(f"fixed_narration_{idx+1}", "")
+                                st.session_state[f"fixed_prompt_{idx}"] = st.session_state.get(f"fixed_prompt_{idx+1}", "")
+                            
+                            # Clean up the last one
+                            last_idx = st.session_state.fixed_scenes_count - 1
+                            if f"fixed_narration_{last_idx}" in st.session_state:
+                                del st.session_state[f"fixed_narration_{last_idx}"]
+                            if f"fixed_prompt_{last_idx}" in st.session_state:
+                                del st.session_state[f"fixed_prompt_{last_idx}"]
+                                
+                            st.session_state.fixed_scenes_count = max(1, st.session_state.fixed_scenes_count - 1)
+                            st.rerun()
+                
+                # Add row button
+                if st.button(tr("input.add_scene"), use_container_width=True):
+                    st.session_state.fixed_scenes_count += 1
+                    st.rerun()
+                
+                # Assemble text format compatible with backend
+                valid_blocks = []
+                for i in range(st.session_state.fixed_scenes_count):
+                    nar = st.session_state.get(f"fixed_narration_{i}", "").strip()
+                    prt = st.session_state.get(f"fixed_prompt_{i}", "").strip()
+                    if nar or prt:
+                        block_lines = []
+                        if nar:
+                            block_lines.append(nar)
+                        else:
+                            block_lines.append("...")
+                        if prt:
+                            block_lines.append(f"提示词：{prt}")
+                        valid_blocks.append("\n".join(block_lines))
+                text = "\n\n".join(valid_blocks)
             
             # Title input (optional for both modes)
             title = st.text_input(

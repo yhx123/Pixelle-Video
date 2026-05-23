@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="template:media-width" content="1024">
+    <meta name="template:media-height" content="1024">
+    <meta name="viewport" content="width=1080, height=1920">
+    <title>壹格专升本 - 知识考点卡片</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 1080px;
+            height: 1920px;
+            overflow: hidden;
+            background: #041915; /* 深沉极光暗墨绿 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            color: #e2e8f0;
+        }
+
+        /* 背景装饰图层 */
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* 墨绿渐变光晕 */
+        .glow-orb-1 {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            filter: blur(80px);
+        }
+
+        .glow-orb-2 {
+            position: absolute;
+            width: 900px;
+            height: 900px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(4, 120, 87, 0.2) 0%, transparent 70%);
+            bottom: -100px;
+            right: -250px;
+            filter: blur(100px);
+        }
+
+        /* 金色繁星微光 */
+        .glow-orb-3 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 65%);
+            top: 40%;
+            left: 20%;
+            filter: blur(60px);
+        }
+
+        /* 学术点阵格线背景 */
+        .academic-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(rgba(245, 158, 11, 0.12) 1.5px, transparent 1.5px),
+                linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px, 80px 80px, 80px 80px;
+            background-position: 0 0, 40px 40px, 40px 40px;
+            opacity: 0.85;
+        }
+
+        /* 动感流畅曲线 */
+        .accent-wave {
+            position: absolute;
+            width: 1200px;
+            height: 4px;
+            top: 15%;
+            left: -100px;
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), rgba(16, 185, 129, 0.3), transparent);
+            transform: rotate(-12deg);
+            filter: blur(2px);
+        }
+
+        /* 主容器 */
+        .page-container {
+            position: relative;
+            z-index: 1;
+            width: 1080px;
+            height: 1920px;
+            padding: 85px 75px 80px 75px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* 顶部栏 */
+        .header-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        /* 左侧徽章：倒计时/分类标签 */
+        .badge-countdown {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.25) 100%);
+            border: 2px solid rgba(245, 158, 11, 0.6);
+            border-radius: 40px;
+            padding: 10px 24px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fbbf24;
+            letter-spacing: 1px;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-countdown::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fbbf24;
+        }
+
+        /* 右侧学科类别徽章 */
+        .badge-category {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(4, 120, 87, 0.25) 100%);
+            border: 2px solid rgba(16, 185, 129, 0.6);
+            border-radius: 40px;
+            padding: 10px 28px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #34d399;
+            letter-spacing: 2px;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+        }
+
+        /* 核心大标题区域 */
+        .title-container {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .title-accent-bar {
+            width: 180px;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+            margin: 0 auto 20px auto;
+            border-radius: 10px;
+        }
+
+        .title {
+            font-size: 76px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            line-height: 1.25;
+            background: linear-gradient(135deg, #ffffff 0%, #fbbf24 60%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.3));
+        }
+
+        /* 精美画框容器 */
+        .image-wrapper {
+            position: relative;
+            padding: 24px;
+            margin-bottom: 45px;
+        }
+
+        /* 金色拉丝微光相框背景 */
+        .image-frame-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, 
+                rgba(245, 158, 11, 0.3) 0%, 
+                rgba(16, 185, 129, 0.15) 50%, 
+                rgba(245, 158, 11, 0.25) 100%);
+            border: 2px solid rgba(245, 158, 11, 0.4);
+            border-radius: 36px;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 0;
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.5),
+                inset 0 0 40px rgba(245, 158, 11, 0.1);
+        }
+
+        /* 相框四个金角饰品 */
+        .frame-corner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fbbf24;
+            z-index: 2;
+            filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));
+        }
+
+        .frame-corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; border-radius: 20px 0 0 0; }
+        .frame-corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; border-radius: 0 20px 0 0; }
+        .frame-corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; border-radius: 0 0 0 20px; }
+        .frame-corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; border-radius: 0 0 20px 0; }
+
+        /* AI生图的图片容器 */
+        .image-container {
+            width: 100%;
+            height: 850px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* 文字磨砂玻璃卡片 */
+        .text-wrapper {
+            position: relative;
+            padding: 45px 55px;
+            margin-bottom: 40px;
+        }
+
+        .text-card-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.08) 0%, 
+                rgba(255, 255, 255, 0.03) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 30px;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 0;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        /* 优雅的侧边双金色线条 */
+        .text-accent-line {
+            position: absolute;
+            width: 5px;
+            height: 150px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        .text-accent-line.left {
+            left: 25px;
+            background: linear-gradient(180deg, #fbbf24 0%, rgba(245, 158, 11, 0.1) 100%);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .text-accent-line.right {
+            right: 25px;
+            background: linear-gradient(180deg, #fbbf24 0%, rgba(245, 158, 11, 0.1) 100%);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        /* 引号小装饰 */
+        .quote-icon {
+            position: absolute;
+            font-size: 130px;
+            font-family: Georgia, serif;
+            color: rgba(245, 158, 11, 0.18);
+            font-weight: 700;
+            line-height: 1;
+            z-index: 0;
+        }
+
+        .quote-icon.open {
+            top: 10px;
+            left: 30px;
+        }
+
+        .quote-icon.close {
+            bottom: -30px;
+            right: 35px;
+        }
+
+        /* 考点正文文字样式 */
+        .text-content {
+            position: relative;
+            z-index: 1;
+            font-size: 44px;
+            color: #f1f5f9;
+            text-align: justify;
+            line-height: 1.85;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: pre-line;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 底部品牌区 */
+        .footer-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding-top: 35px;
+            border-top: 3px solid rgba(245, 158, 11, 0.4);
+            position: relative;
+        }
+
+        .footer-section::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 7px;
+            background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+            border-radius: 10px;
+            filter: blur(2px);
+        }
+
+        .author-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .author-name {
+            font-size: 38px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .author-indicator {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #fbbf24;
+            box-shadow: 0 0 8px #fbbf24;
+        }
+
+        .indicator-dot.large {
+            width: 14px;
+            height: 14px;
+            background-color: #fbbf24;
+            box-shadow: 0 0 12px #fbbf24;
+        }
+
+        .author-desc {
+            font-size: 26px;
+            color: #94a3b8;
+            font-weight: 500;
+            max-width: 580px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .brand-logo {
+            font-size: 34px;
+            font-weight: 900;
+            color: #fbbf24;
+            letter-spacing: 2px;
+            position: relative;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            padding-right: 22px;
+        }
+
+        .brand-logo::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #fbbf24;
+            box-shadow: 0 0 12px #fbbf24;
+        }
+
+        .logo-bars {
+            display: flex;
+            gap: 6px;
+        }
+
+        .logo-bar {
+            width: 35px;
+            height: 5px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #fbbf24, #10b981);
+        }
+
+        .logo-bar:nth-child(2) { width: 25px; }
+        .logo-bar:nth-child(3) { width: 16px; }
+
+    </style>
+</head>
+<body>
+    <!-- 背景多维光晕与学术格线装饰 -->
+    <div class="bg-overlay">
+        <div class="glow-orb-1"></div>
+        <div class="glow-orb-2"></div>
+        <div class="glow-orb-3"></div>
+        <div class="academic-grid"></div>
+        <div class="accent-wave"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="page-container">
+        <div>
+            <!-- 顶部栏 -->
+            <div class="header-section">
+                <div class="badge-countdown">{{countdown=江西专升本 • 核心考点}}</div>
+                <div class="badge-category">{{category=高等数学}}</div>
+            </div>
+
+            <!-- 大标题 -->
+            <div class="title-container">
+                <div class="title-accent-bar"></div>
+                <div class="title">{{title}}</div>
+            </div>
+
+            <!-- 高阶画框 -->
+            <div class="image-wrapper">
+                <div class="image-frame-bg"></div>
+                <div class="frame-corner tl"></div>
+                <div class="frame-corner tr"></div>
+                <div class="frame-corner bl"></div>
+                <div class="frame-corner br"></div>
+
+                <div class="image-container">
+                    <img src="{{image}}" alt="考点配图">
+                </div>
+            </div>
+
+            <!-- 正文玻璃卡片 -->
+            <div class="text-wrapper">
+                <div class="text-card-bg"></div>
+                <div class="text-accent-line left"></div>
+                <div class="text-accent-line right"></div>
+                <div class="quote-icon open">“</div>
+                <div class="text-content">{{text}}</div>
+                <div class="quote-icon close">”</div>
+            </div>
+        </div>
+
+        <!-- 底部品牌签名区 -->
+        <div class="footer-section">
+            <div class="author-box">
+                <div class="author-name">
+                    <div class="author-indicator">
+                        <div class="indicator-dot"></div>
+                        <div class="indicator-dot large"></div>
+                        <div class="indicator-dot"></div>
+                    </div>
+                    {{author=壹格专升本}}
+                </div>
+                <div class="author-desc">{{describe=壹格专升本（江西），祝您再上一格。政策解读|数据对比 丨备考资料，一站式上岸。}}</div>
+            </div>
+            <div class="logo-box">
+                <div class="brand-logo">{{brand=壹格专升本}}</div>
+                <div class="logo-bars">
+                    <div class="logo-bar"></div>
+                    <div class="logo-bar"></div>
+                    <div class="logo-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -123,10 +123,41 @@ class StandardPipeline(LinearVideoPipeline):
             logger.info(f"✅ Generated {len(ctx.narrations)} narrations")
         else:  # fixed
             self._report_progress(ctx.progress_callback, "splitting_script", 0.05)
-            split_mode = ctx.params.get("split_mode", "paragraph")
-            ctx.narrations = await split_narration_script(text, split_mode=split_mode)
-            logger.info(f"✅ Split script into {len(ctx.narrations)} segments (mode={split_mode})")
-            logger.info(f"   Note: n_scenes={n_scenes} is ignored in fixed mode")
+            import re
+            
+            # 按双换行（段落）切分
+            blocks = [b.strip() for b in text.split('\n\n') if b.strip()]
+            
+            ctx.narrations = []
+            ctx.image_prompts = []
+            
+            for block in blocks:
+                lines = block.split('\n')
+                narration_lines = []
+                custom_prompt = None
+                
+                for line in lines:
+                    line_str = line.strip()
+                    if not line_str:
+                        continue
+                    # 使用非行首锚定的正则拆分可能存在于同一行内的旁白与提示词
+                    match = re.search(r'(.*?)(提示词|prompt|Prompt|画面描述)[:：]\s*(.*)$', line_str, re.IGNORECASE)
+                    if match:
+                        prefix_narration = match.group(1).strip()
+                        if prefix_narration:
+                            narration_lines.append(prefix_narration)
+                        custom_prompt = match.group(3).strip()
+                    else:
+                        narration_lines.append(line_str)
+                
+                narration = " ".join(narration_lines).strip()
+                if narration:
+                    ctx.narrations.append(narration)
+                    ctx.image_prompts.append(custom_prompt if custom_prompt else None)
+            
+            logger.info(f"✅ 解析脚本完成，共 {len(ctx.narrations)} 段 (自行创作模式)")
+            logger.info(f"   用户提供了提示词: {sum(1 for p in ctx.image_prompts if p is not None)}/{len(ctx.narrations)}")
+            logger.info(f"   注意: 在固定模式下忽略 n_scenes={n_scenes}")
 
     async def determine_title(self, ctx: PipelineContext):
         """Step 3: Determine or generate video title."""
@@ -168,58 +199,83 @@ class StandardPipeline(LinearVideoPipeline):
             logger.info(f"⚡ Static template - skipping media generation pipeline")
             logger.info(f"   💡 Benefits: Faster generation + Lower cost + No ComfyUI dependency")
         
-        # Only generate image prompts if template requires media
+        # 只有在模板需要媒体资源时才生成图片提示词
         if template_requires_media:
-            self._report_progress(ctx.progress_callback, "generating_image_prompts", 0.15)
-            
             prompt_prefix = ctx.params.get("prompt_prefix")
             min_words = ctx.params.get("min_image_prompt_words", 30)
             max_words = ctx.params.get("max_image_prompt_words", 60)
             
-            # Override prompt_prefix if provided
+            # 如果提供了自定义风格前缀，则进行覆盖
             original_prefix = None
             if prompt_prefix is not None:
                 image_config = self.core.config.get("comfyui", {}).get("image", {})
                 original_prefix = image_config.get("prompt_prefix")
                 image_config["prompt_prefix"] = prompt_prefix
-                logger.info(f"Using custom prompt_prefix: '{prompt_prefix}'")
+                logger.info(f"使用自定义提示词风格前缀：'{prompt_prefix}'")
             
             try:
-                # Create progress callback wrapper for image prompt generation
-                def image_prompt_progress(completed: int, total: int, message: str):
-                    batch_progress = completed / total if total > 0 else 0
-                    overall_progress = 0.15 + (batch_progress * 0.15)
-                    self._report_progress(
-                        ctx.progress_callback,
-                        "generating_image_prompts",
-                        overall_progress,
-                        extra_info=message
+                # 检查哪些分镜缺失 image_prompt
+                # 预填充通常在 generate_content 的 fixed 解析阶段产生
+                if not getattr(ctx, "image_prompts", None) or len(ctx.image_prompts) != len(ctx.narrations):
+                    ctx.image_prompts = [None] * len(ctx.narrations)
+                
+                # 找到所有缺失提示词的分镜索引
+                missing_indices = [i for i, prompt in enumerate(ctx.image_prompts) if prompt is None]
+                
+                logger.info(f"🔍 画面规划诊断：当前已解析提示词总数 = {len(ctx.image_prompts)}，缺失提示词的分镜索引 = {missing_indices}")
+                
+                if missing_indices:
+                    # 存在缺失的提示词，需要调用大模型自动生成，并上报“生成图片提示词...”进度
+                    self._report_progress(ctx.progress_callback, "generating_image_prompts", 0.15)
+                    
+                    missing_narrations = [ctx.narrations[i] for i in missing_indices]
+                    
+                    # 创建图片提示词生成的进度回调包装器
+                    def image_prompt_progress(completed: int, total: int, message: str):
+                        batch_progress = completed / total if total > 0 else 0
+                        overall_progress = 0.15 + (batch_progress * 0.15)
+                        self._report_progress(
+                            ctx.progress_callback,
+                            "generating_image_prompts",
+                            overall_progress,
+                            extra_info=message
+                        )
+                    
+                    # 为缺失的分镜生成基础提示词
+                    generated_prompts = await generate_image_prompts(
+                        self.llm,
+                        narrations=missing_narrations,
+                        min_words=min_words,
+                        max_words=max_words,
+                        progress_callback=image_prompt_progress
                     )
+                    
+                    # 将生成的提示词回填到 ctx 中
+                    for idx, prompt in zip(missing_indices, generated_prompts):
+                        ctx.image_prompts[idx] = prompt
+                else:
+                    # 所有提示词均已由用户填入，上报“正在应用自定义提示词...”进度，消解用户对自动生成的疑虑
+                    self._report_progress(ctx.progress_callback, "applying_custom_prompts", 0.15)
+                    logger.info("🎉 检测到所有分镜的画面提示词均由用户手动指定，直接跳过大模型生成步骤")
                 
-                # Generate base image prompts
-                base_image_prompts = await generate_image_prompts(
-                    self.llm,
-                    narrations=ctx.narrations,
-                    min_words=min_words,
-                    max_words=max_words,
-                    progress_callback=image_prompt_progress
-                )
-                
-                # Apply prompt prefix
+                # 应用提示词风格前缀
                 image_config = self.core.config.get("comfyui", {}).get("image", {})
                 prompt_prefix_to_use = prompt_prefix if prompt_prefix is not None else image_config.get("prompt_prefix", "")
                 
-                ctx.image_prompts = []
-                for base_prompt in base_image_prompts:
+                final_prompts = []
+                for idx, base_prompt in enumerate(ctx.image_prompts):
                     final_prompt = build_image_prompt(base_prompt, prompt_prefix_to_use)
-                    ctx.image_prompts.append(final_prompt)
+                    final_prompts.append(final_prompt)
+                    logger.info(f"   分镜 #{idx + 1} 最终应用后的完整提示词：'{final_prompt}'")
+                
+                ctx.image_prompts = final_prompts
                 
             finally:
-                # Restore original prompt_prefix
+                # 恢复原始提示词风格前缀配置
                 if original_prefix is not None:
                     image_config["prompt_prefix"] = original_prefix
             
-            logger.info(f"✅ Generated {len(ctx.image_prompts)} image prompts")
+            logger.info(f"✅ 插图提示词规划完成，共 {len(ctx.image_prompts)} 个分镜")
         else:
             # Static template - skip image prompt generation entirely
             ctx.image_prompts = [None] * len(ctx.narrations)
