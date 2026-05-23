@@ -1,0 +1,93 @@
+{
+  "1": {
+    "inputs": {
+      "model_name": "Fun-CosyVoice3-0.5B",
+      "download_source": "ModelScope",
+      "device": "cuda",
+      "model_version": "Fun-CosyVoice3-0.5B"
+    },
+    "class_type": "FL_CosyVoice3_ModelLoader",
+    "_meta": {
+      "title": "FL_CosyVoice3_ModelLoader"
+    }
+  },
+  "2": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "reference_audio": [
+        "5",
+        0
+      ],
+      "text": [
+        "3",
+        0
+      ],
+      "speed": [
+        "6",
+        0
+      ],
+      "seed": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "FL_CosyVoice3_ZeroShot",
+    "_meta": {
+      "title": "FL_CosyVoice3_ZeroShot"
+    }
+  },
+  "3": {
+    "inputs": {
+      "value": "大家好，这是一段测试语音。"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "$text.value!"
+    }
+  },
+  "4": {
+    "inputs": {
+      "filename_prefix": "audio/ComfyUI",
+      "quality": "V0",
+      "audioUI": "",
+      "audio": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "SaveAudioMP3",
+    "_meta": {
+      "title": "Save Audio (MP3)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "audio": "scratch/test_ref_voice.mp3"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "$ref_audio.audio"
+    }
+  },
+  "6": {
+    "inputs": {
+      "value": 1
+    },
+    "class_type": "easy float",
+    "_meta": {
+      "title": "$speed.value"
+    }
+  },
+  "7": {
+    "inputs": {
+      "value": 42
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "$seed.value"
+    }
+  }
+}

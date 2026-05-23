@@ -64,43 +64,39 @@ def render_content_input():
                 # Fixed mode: dynamic list-based multi-row input with smart layout
                 st.info(tr("input.fixed_format_hint"))
                 
-                # Initialize state with 8 premium "壹格专升本" video scenes
+                # Initialize state with 7 premium "壹格专升本" video scenes
                 if "fixed_scenes_count" not in st.session_state:
-                    st.session_state.fixed_scenes_count = 8
+                    st.session_state.fixed_scenes_count = 7
                     
-                    # 预设的专升本分镜旁白与自定义生图提示词
+                    # 预设的专升本分镜旁白与自定义生图提示词 (深度融入 LOCAL_MODEL_GUIDE)
                     default_scenes = [
                         {
-                            "narration": "很多 2027 届的同学公共课复习得热火朝天，但一提到专业课，脑子里却是一片空白。专业课到底选哪科？该怎么备考？这关如果搞错了，后面的努力可能全部白费！",
-                            "prompt": "A frustrated male college student sitting at a desk with towering stacks of books, a glowing big neon question mark above his head, modern minimalist illustration style, deep navy and energetic orange colors, high contrast, clean lines, cinematic lighting --ar 9:16"
+                            "narration": "2027届专升本，现在才开始起步，是不是已经晚了？先给结论：不晚，而且节奏刚刚好！10个月时间足够你从零逆袭！",
+                            "prompt": "cozy anime style, Ghibli Art, a warm desk lamp lighting up a student looking anxious at a desk with textbooks at night, nostalgic and emotional atmosphere, slow camera zoom in, soft shadows --ar 9:16"
                         },
                         {
-                            "narration": "专升本专业课总分 150 分。江西专升本将专业课划分成了 9 大招考类别，你的专科专业决定了你能报的类别，而类别直接锁定了你下午要考的专业课科目。",
-                            "prompt": "An abstract 3D infographic showing a flowchart branch splitting into colorful glowing modules, representing academic disciplines, corporate pastel gradient colors, high-tech minimalism, hyper-detailed rendering --ar 9:16"
+                            "narration": "我们务实地算笔时间账：扣除在校期、期末考试和懈怠期，10个月你大约有700到900小时的有效学习时间，足够完成三轮系统复习！",
+                            "prompt": "flat illustration, vector, vector illustration, minimalist, vibrant teal and orange gradient background, a glowing glass hourglass and calendar pages turning, clean white lines, smooth motion --ar 9:16"
                         },
                         {
-                            "narration": "比如计算机专业属于理工类，专业课要考高等数学；会计或市场营销属于管理类，专业课考管理学。同一个大类底下的所有专业，考的都是同一张专业课试卷。",
-                            "prompt": "Split-screen concept, left side showing mathematical integration equations on a modern laptop screen, right side showing a colorful conceptual business organization chart, vibrant technology aesthetic, vector graphics style --ar 9:16"
+                            "narration": "先看你站在哪：零基础同学，首要任务是每天背30个单词建立学习节奏；有概念同学，要用一套真题快速评估，补齐弱项短板！",
+                            "prompt": "flat illustration, vector, vector illustration, minimalist, vibrant blue and purple gradient background, two athletic running shoes on a clean white starting line, modern flat vector graphic --ar 9:16"
                         },
                         {
-                            "narration": "公共课 300 分是你的“入场券”，不过省控线，专业课再高也白搭；但专业课 150 分，才是高分段选手拉开差距、决定你能不能上公办本科的“终极杀手锏”。",
-                            "prompt": "A glowing cosmic scale balance, a heavy foundational block on the left representing base entry ticket, and a shining golden laurel crown on the right representing extreme competitive advantage, surreal vector style --ar 9:16"
+                            "narration": "5到7月公共课先动起来：英语最早启动，词汇雷打不动；政治紧随其后搭建大纲框架；信息技术稍晚，重点攻克选择题和Office操作！",
+                            "prompt": "flat illustration, vector, vector illustration, minimalist, vibrant yellow and orange gradient background, a neat desk with English grammar books, a glowing blue gear symbol on a laptop screen, clean white lines --ar 9:16"
                         },
                         {
-                            "narration": "对于理工类考生，高等数学就是一座大山。微积分作为绝对核心占了大部分分值。基础薄弱的同学，从现在起就得从函数、极限老老实实补起，绝不能拖延！",
-                            "prompt": "A dynamic silhouette of a climber climbing up a steep stylized mountain built from mathematical formulas and calculus integral symbols, golden sunrise lighting, conceptual vector art, motivating style --ar 9:16"
+                            "narration": "记住，千万别一上来就四科齐开！5到6月先翻目录做预学习，等到7月暑假，再集中火力开启专业课的第一轮系统复习。",
+                            "prompt": "Claymation, Q-version 3D clay style, a cute and friendly clay male student sitting happily at a sunny summer desk, holding a big red textbook titled \"Higher Math\", warm lighting --ar 9:16"
                         },
                         {
-                            "narration": "而管理学虽然理论庞杂，但体系极其清晰。最好的复习武器就是思维导图。只要把每章的核心框架理顺，专业课拿分反而比高数更加稳当、更有性价比。",
-                            "prompt": "Close up of hands drawing a beautifully structured mind-map on an iPad screen, branches glowing with soft pastel light, organized concept, bright modern desk environment, flat lay view, warm aesthetic --ar 9:16"
+                            "narration": "现在就可以做三件事：第一，确认你的招考类别和考科；第二，拿一套2026年真题限时感受难度；第三，制定一个『100天跑起来』的计划！",
+                            "prompt": "Claymation, a beautiful modern study planner on a cozy wooden desk, three bright green checklists marked done, a cute mini coffee mug, soft warm volumetric window light --ar 9:16"
                         },
                         {
-                            "narration": "2027 届现在要做三件事：第一，通过专业对照表确定你的招考类别；第二，翻出前一年的官方大纲建立预期；第三，诚实评估底子，把专业课提前列入规划！",
-                            "prompt": "A beautifully styled study planner notebook on a clean desk, three bright green checklists marked done, a cup of coffee nearby, soft volumetric window light, minimal cozy study aesthetic --ar 9:16"
-                        },
-                        {
-                            "narration": "硬实力来自于每天有规划的积累，而不是考前三个月的盲目突击。关注我，持续为你更新 2027 届专升本最靠谱的避坑攻略，留言告诉我你想考哪门！",
-                            "prompt": "A winding scenic road leading towards a bright horizon with ascending glowing arrows in the sky, minimalist modern design, warm comforting color scheme, welcoming and hopeful mood --ar 9:16"
+                            "narration": "专升本不是短跑，而是跑赢终点的长跑。关注壹格上岸，回复『2027』领取完整备考规划，帮你少走弯路，一站式成功上岸！",
+                            "prompt": "cozy anime style, Ghibli Art, a scenic road leading towards a bright glowing university campus on a sunny morning, warm light, optimistic and hopeful mood, camera panning forward slowly --ar 9:16"
                         }
                     ]
                     
